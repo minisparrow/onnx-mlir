@@ -25,7 +25,7 @@ using namespace mlir;
 // EntryPoint Op lowering to Krnl Entry Point.
 //===----------------------------------------------------------------------===//
 
-class ONNXEntryPointLowering : public OpRewritePattern<ONNXEntryPointOp> {
+class ONNXEntryPointLowering final : public OpRewritePattern<ONNXEntryPointOp> {
 public:
   using OpRewritePattern<ONNXEntryPointOp>::OpRewritePattern;
 
@@ -50,8 +50,9 @@ public:
 
 /// This is a partial lowering to Krnl loops of the ONNX operations.
 namespace {
-struct FrontendToKrnlLoweringPass
+class FrontendToKrnlLoweringPass final
     : public PassWrapper<FrontendToKrnlLoweringPass, OperationPass<ModuleOp>> {
+public:
   // Make sure that we have a valid default constructor and copy
   // constructor to make sure that the options are initialized properly.
   FrontendToKrnlLoweringPass() = default;
@@ -59,6 +60,12 @@ struct FrontendToKrnlLoweringPass
   FrontendToKrnlLoweringPass(bool emitDealloc) {
     this->emitDealloc = emitDealloc;
   }
+  FrontendToKrnlLoweringPass(FrontendToKrnlLoweringPass &&) = delete;
+  ~FrontendToKrnlLoweringPass() = default;
+
+  FrontendToKrnlLoweringPass operator=(
+      const FrontendToKrnlLoweringPass &) = delete;
+  FrontendToKrnlLoweringPass operator=(FrontendToKrnlLoweringPass &&) = delete;
 
   void runOnOperation() final;
 
@@ -183,6 +190,7 @@ void FrontendToKrnlLoweringPass::runOnOperation() {
   populateLoweringONNXConcatOpPattern(patterns, &getContext());
   populateLoweringONNXShapeOpPattern(patterns, &getContext());
   populateLoweringONNXSliceOpPattern(patterns, &getContext());
+  populateLoweringONNXSpaceToDepthOpPattern(patterns, &getContext());
   populateLoweringONNXSqueezeOpPattern(patterns, &getContext());
   populateLoweringONNXSqueezeV11OpPattern(patterns, &getContext());
   populateLoweringONNXSplitOpPattern(patterns, &getContext());

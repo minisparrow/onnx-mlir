@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Please keep in alphabetical order.
 add_onnx_mlir_library(OMONNXToKrnl
+  ConvertONNXToKrnl.cpp
   ONNXToKrnlCommon.cpp
   ControlFlow/Loop.cpp
   ControlFlow/Scan.cpp
@@ -14,34 +16,34 @@ add_onnx_mlir_library(OMONNXToKrnl
   NN/Conv.cpp
   NN/Normalization.cpp
   NN/Pooling.cpp
-  RNN/RNNBase.cpp
   RNN/GRU.cpp
   RNN/LSTM.cpp
   RNN/RNN.cpp
+  RNN/RNNBase.cpp
   Tensor/ArgMax.cpp
-  Tensor/Identity.cpp
-  Tensor/Reshape.cpp
-  Tensor/Pad.cpp
-  Tensor/Transpose.cpp
-  Tensor/Squeeze.cpp
-  Tensor/Unsqueeze.cpp
+  Tensor/Concat.cpp
   Tensor/Constant.cpp
   Tensor/ConstantOfShape.cpp
-  Tensor/Concat.cpp
   Tensor/Expand.cpp
-  Tensor/Split.cpp
-  Tensor/Gather.cpp
-  Tensor/Shape.cpp
-  Tensor/Slice.cpp
-  Tensor/Size.cpp
   Tensor/Flatten.cpp
+  Tensor/Gather.cpp 
+  Tensor/Identity.cpp
+  Tensor/NonZero.cpp
+  Tensor/OneHot.cpp  
+  Tensor/Pad.cpp
+  Tensor/Squeeze.cpp
+  Tensor/Split.cpp
+  Tensor/Shape.cpp
+  Tensor/Size.cpp 
+  Tensor/Slice.cpp
+  Tensor/SpaceToDepth.cpp
+  Tensor/Reshape.cpp
   Tensor/Tile.cpp
+  Tensor/Transpose.cpp
+  Tensor/Unsqueeze.cpp
   Tensor/Range.cpp
   Tensor/Resize.cpp
-  Tensor/NonZero.cpp
-  Tensor/OneHot.cpp
-  ConvertONNXToKrnl.cpp
-
+  
   LINK_LIBS PUBLIC
   OMConstPropHelper
   OMONNXOps

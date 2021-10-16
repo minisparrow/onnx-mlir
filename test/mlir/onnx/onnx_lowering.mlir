@@ -658,6 +658,40 @@ func private @test_softsign(%arg0 : tensor<?x10xf32>) -> tensor<*xf32> {
 
 // -----
 
+// Test whether the lowering is correct in the presence of dynamic dimensions.
+func private @test_space_to_depth_dynamic_dims(%arg0 : tensor<1x?x16x?xf32>) -> tensor<1x?x4x?xf32> {
+  %0 = "onnx.SpaceToDepth"(%arg0) {blocksize = 4 : si64} : (tensor<1x?x16x?xf32>) -> tensor<1x?x4x?xf32>
+  "std.return"(%0) : (tensor<1x?x4x?xf32>) -> ()
+
+  // CHECK-LABEL: test_space_to_depth_dynamic_dims
+  // CHECK: [[C3:%.+]] = constant 3 : index
+  // CHECK: [[DIM_3:%.+]] = memref.dim %arg0, [[C3]] : memref<1x?x16x?xf32>
+  // CHECK-COUNT-3: [[C1_1:%.+]] = constant 1 : index
+  // CHECK: [[DIM_1:%.+]] = memref.dim %arg0, [[C1_1]] : memref<1x?x16x?xf32>
+  // CHECK: [[MULI:%.+]] = muli {{.*}}, {{.*}} : index
+  // CHECK-COUNT-4: [[C4:%.+]] = constant 4 : index
+  // CHECK-NEXT: [[DIV0:%.+]] = floordivi_signed %6, [[C4]] : index
+  // CHECK: [[RC1:%.+]] = memref.reinterpret_cast %arg0 to offset: [0], sizes: [1, [[DIM_1]], 4, 4, [[DIV0]], 4], strides: [{{.*}}, 4, 1] : memref<1x?x16x?xf32> to memref<1x?x4x4x?x4xf32>
+  
+  // CHECK-NEXT: [[ALLOC:%.+]] = memref.alloc([[DIM_1]], [[DIV0]]) {{.*}} : memref<1x?x4x4x4x?xf32>
+  // CHECK-DAG: [[LOOP:%.+]]:6 = krnl.define_loops 6
+  // CHECK-DAG: [[CST_1:%.+]] = constant 1 : index
+  // CHECK-NEXT: [[DIM_1_:%.+]] = memref.dim [[RC1]], [[CST_1]] : memref<1x?x4x4x?x4xf32>
+  // CHECK-DAG: [[CST_4:%.+]] = constant 4 : index  
+  // CHECK-NEXT: [[DIM_4_:%.+]] = memref.dim [[RC1]], [[CST_4]] : memref<1x?x4x4x?x4xf32>  
+  // CHECK-NEXT: krnl.iterate([[LOOP]]#0, [[LOOP]]#1, [[LOOP]]#2, [[LOOP]]#3, [[LOOP]]#4, [[LOOP]]#5) with (
+  // CHECK-SAME: [[LOOP]]#0 -> [[I_0:%.+]] = 0 to 1, [[LOOP]]#1 -> [[I_1:%.+]] = 0 to [[DIM_1_]], [[LOOP]]#2 -> [[I_2:%.+]] = 0 to 4, [[LOOP]]#3 -> [[I_3:%.+]] = 0 to 4,
+  // CHECK-SAME: [[LOOP]]#4 -> [[I_4:%.+]] = 0 to [[DIM_4_]], [[LOOP]]#5 -> [[I_5:%.+]] = 0 to 4) {
+  // CHECK-NEXT: [[LOAD:%.+]] = krnl.load [[RC1]]{{.*}}[[I_0]], [[I_1]], [[I_2]], [[I_3]], [[I_4]], [[I_5]]{{.*}} : memref<1x?x4x4x?x4xf32>
+  // CHECK-NEXT: krnl.store [[LOAD]], [[ALLOC]]{{.*}}[[I_0]], [[I_1]], [[I_3]], [[I_5]], [[I_2]], [[I_4]]{{.*}} : memref<1x?x4x4x4x?xf32>
+  // CHECK-NEXT: }
+
+  // CHECK: [[RC2:%.+]] = memref.reinterpret_cast [[ALLOC]] to offset: [0], sizes: [1, [[MULI]], 4, [[DIV0]]], strides: [{{.*}}, 1] : memref<1x?x4x4x4x?xf32> to memref<1x?x4x?xf32>
+  // CHECK: return [[RC2]] : memref<1x?x4x?xf32>
+}
+
+// -----
+
 func private @test_reducemax(%arg0 : tensor<3x2x2xf32>) -> tensor<*xf32> {
   %0 ="onnx.ReduceMax"(%arg0) {axes=[1], keepdims = 0 : si64} : (tensor<3x2x2xf32>)-> tensor<*xf32>
   "std.return"(%0) : (tensor<*xf32>) -> ()
